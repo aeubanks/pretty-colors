@@ -1,11 +1,11 @@
-use noise::{NoiseFn, Perlin};
+use noise::{NoiseFn, Simplex};
 
 use crate::palette::{self, Rgb};
 
 pub struct NoiseField {
-    perlin_hue: Perlin,
-    perlin_sat: Perlin,
-    perlin_light: Perlin,
+    perlin_hue: Simplex,
+    perlin_sat: Simplex,
+    perlin_light: Simplex,
     scale: f64,
     speed: f64,
 }
@@ -13,9 +13,9 @@ pub struct NoiseField {
 impl NoiseField {
     pub fn new(seed: u32, scale: f64, speed: f64) -> Self {
         Self {
-            perlin_hue: Perlin::new(seed),
-            perlin_sat: Perlin::new(seed.wrapping_add(1)),
-            perlin_light: Perlin::new(seed.wrapping_add(2)),
+            perlin_hue: Simplex::new(seed),
+            perlin_sat: Simplex::new(seed.wrapping_add(1)),
+            perlin_light: Simplex::new(seed.wrapping_add(2)),
             scale,
             speed,
         }
