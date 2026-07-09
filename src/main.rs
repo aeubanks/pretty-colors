@@ -6,7 +6,10 @@ use minifb::{Key, Window, WindowOptions};
 use noise::NoiseField;
 
 #[derive(Parser)]
-#[command(name = "pretty-colors", about = "Animated 3D Perlin noise visualization")]
+#[command(
+    name = "pretty-colors",
+    about = "Animated 3D Perlin noise visualization"
+)]
 struct Args {
     #[arg(long, default_value_t = 800)]
     width: u32,
@@ -14,10 +17,10 @@ struct Args {
     #[arg(long, default_value_t = 600)]
     height: u32,
 
-    #[arg(long, default_value_t = 0.008)]
+    #[arg(long, default_value_t = 0.0015)]
     scale: f64,
 
-    #[arg(long, default_value_t = 1.0)]
+    #[arg(long, default_value_t = 0.15)]
     speed: f64,
 
     #[arg(long)]
@@ -30,7 +33,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let seed = args.seed.unwrap_or_else(|| rand::random::<u32>() % 1_000_000);
+    let seed = args
+        .seed
+        .unwrap_or_else(|| rand::random::<u32>() % 1_000_000);
     let noise = NoiseField::new(seed, args.scale, args.speed);
 
     eprintln!(

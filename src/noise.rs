@@ -3,7 +3,9 @@ use noise::{NoiseFn, Perlin};
 use crate::palette::{self, Rgb};
 
 pub struct NoiseField {
-    perlin: Perlin,
+    perlin_hue: Perlin,
+    perlin_sat: Perlin,
+    perlin_light: Perlin,
     scale: f64,
     speed: f64,
 }
@@ -11,7 +13,9 @@ pub struct NoiseField {
 impl NoiseField {
     pub fn new(seed: u32, scale: f64, speed: f64) -> Self {
         Self {
-            perlin: Perlin::new(seed),
+            perlin_hue: Perlin::new(seed),
+            perlin_sat: Perlin::new(seed.wrapping_add(1)),
+            perlin_light: Perlin::new(seed.wrapping_add(2)),
             scale,
             speed,
         }
@@ -23,15 +27,19 @@ impl NoiseField {
 
         for y in 0..height {
             for x in 0..width {
-                let v = self.perlin.get([
-                    x as f64 * self.scale,
-                    y as f64 * self.scale,
-                    z,
-                ]);
+                let v_hue = self
+                    .perlin_hue
+                    .get([x as f64 * self.scale, y as f64 * self.scale, z]);
+                let v_sat = self
+                    .perlin_sat
+                    .get([x as f64 * self.scale, y as f64 * self.scale, z]);
+                let v_light =
+                    self.perlin_light
+                        .get([x as f64 * self.scale, y as f64 * self.scale, z]);
 
-                let hue = ((v + 1.0) / 2.0 * 360.0) % 360.0;
-                let lightness = (0.45 + v * 0.15) * 0.1;
-                let saturation = 0.75 + v.abs() * 0.2;
+                let hue = v_hue.rem_euclid(0.5) / 0.5 * 360.0;
+                let lightness = 0.25 + (v_light + 1.0) / 2.0 * 0.5;
+                let saturation = 0.5 + (v_sat + 1.0) / 2.0 * 0.5;
 
                 let Rgb { r, g, b } = palette::hsl_to_rgb(hue, saturation, lightness);
                 let idx = (y * width + x) as usize;
