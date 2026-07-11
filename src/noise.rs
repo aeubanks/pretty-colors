@@ -80,16 +80,6 @@ fn simplex_3d_x4(x: f32x4, y: f32x4, z: f32x4, seed: u32) -> f32x4 {
         lt_yz.blend(one, lt_xz.blend(one, zero)),
     );
 
-    let x1 = x0 - o1x + unskew;
-    let y1 = y0 - o1y + unskew;
-    let z1 = z0 - o1z + unskew;
-    let x2 = x0 - o2x + f32x4::splat(2.0 * UNSKEW);
-    let y2 = y0 - o2y + f32x4::splat(2.0 * UNSKEW);
-    let z2 = z0 - o2z + f32x4::splat(2.0 * UNSKEW);
-    let x3 = x0 - one + f32x4::splat(3.0 * UNSKEW);
-    let y3 = y0 - one + f32x4::splat(3.0 * UNSKEW);
-    let z3 = z0 - one + f32x4::splat(3.0 * UNSKEW);
-
     let ix: u32x4 = cast(sx.round_int());
     let iy: u32x4 = cast(sy.round_int());
     let iz: u32x4 = cast(sz.round_int());
@@ -110,15 +100,26 @@ fn simplex_3d_x4(x: f32x4, y: f32x4, z: f32x4, seed: u32) -> f32x4 {
     let m2y: u32x4 = cast(o2y.simd_gt(zero));
     let m2z: u32x4 = cast(o2z.simd_gt(zero));
 
-    let h0 = finalize(base);
-    let h1 = finalize(base + m1x.blend(c1, zc) + m1y.blend(c2, zc) + m1z.blend(c3, zc));
-    let h2 = finalize(base + m2x.blend(c1, zc) + m2y.blend(c2, zc) + m2z.blend(c3, zc));
-    let h3 = finalize(base + c1 + c2 + c3);
+    // Compute each corner to completion to keep live ranges short and reduce
+    // register spilling.
+    let s0 = surflet_x4(finalize(base), x0, y0, z0);
 
-    let s0 = surflet_x4(h0, x0, y0, z0);
+    let x1 = x0 - o1x + unskew;
+    let y1 = y0 - o1y + unskew;
+    let z1 = z0 - o1z + unskew;
+    let h1 = finalize(base + m1x.blend(c1, zc) + m1y.blend(c2, zc) + m1z.blend(c3, zc));
     let s1 = surflet_x4(h1, x1, y1, z1);
+
+    let x2 = x0 - o2x + f32x4::splat(2.0 * UNSKEW);
+    let y2 = y0 - o2y + f32x4::splat(2.0 * UNSKEW);
+    let z2 = z0 - o2z + f32x4::splat(2.0 * UNSKEW);
+    let h2 = finalize(base + m2x.blend(c1, zc) + m2y.blend(c2, zc) + m2z.blend(c3, zc));
     let s2 = surflet_x4(h2, x2, y2, z2);
-    let s3 = surflet_x4(h3, x3, y3, z3);
+
+    let x3 = x0 - one + f32x4::splat(3.0 * UNSKEW);
+    let y3 = y0 - one + f32x4::splat(3.0 * UNSKEW);
+    let z3 = z0 - one + f32x4::splat(3.0 * UNSKEW);
+    let s3 = surflet_x4(finalize(base + c1 + c2 + c3), x3, y3, z3);
 
     (s0 + s1) + (s2 + s3)
 }
