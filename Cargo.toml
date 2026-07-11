@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.6", features = ["derive"] }
 minifb = "0.28"
-noise = "0.9"
 rand = "0.10"
 rayon = "1.10"
 
