@@ -9,11 +9,9 @@ const C1: u32 = 0x0100_0193;
 const C2: u32 = 0x8da6_b343;
 const C3: u32 = 0xd816_3841;
 
-fn finalize(mut h: u32x4) -> u32x4 {
-    h ^= h >> 15;
-    h = h * u32x4::splat(0x2c1b_3c6d);
-    h ^= h >> 13;
-    h
+fn finalize(h: u32x4) -> u32x4 {
+    let h = h * u32x4::splat(0x2c1b_3c6d);
+    h ^ (h >> 15)
 }
 
 fn field_to_unit(field: u32x4) -> f32x4 {
