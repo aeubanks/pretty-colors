@@ -12,3 +12,7 @@ wide = "1.5.0"
 
 [profile.release]
 lto = true
+
+[profile.quick]
+inherits = "release"
+lto = false
