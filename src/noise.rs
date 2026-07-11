@@ -152,8 +152,8 @@ impl NoiseField {
                 let y0 = chunk * ROWS_PER_CHUNK;
                 for (dy, row) in block.chunks_mut(width).enumerate() {
                     let yv = f32x4::splat((y0 + dy) as f32 * self.scale);
-                    let mut x = 0usize;
-                    while x < width {
+
+                    let compute = |x: usize| -> [u32; 4] {
                         let base = x as f32 * self.scale;
                         let xv = f32x4::new([
                             base,
@@ -162,15 +162,23 @@ impl NoiseField {
                             base + 3.0 * self.scale,
                         ]);
                         let noise = simplex_3d_x4(xv, yv, zv, self.seed);
-
                         let wrapped =
                             noise - (noise * f32x4::splat(2.0)).floor() * f32x4::splat(0.5);
                         let hue = wrapped * f32x4::splat(360.0 / 0.5);
-                        let pixels = palette::hsl_to_rgb_x4(hue, 0.75, 0.5).to_array();
+                        cast(palette::hsl_to_rgb_x4(hue, 0.75, 0.5))
+                    };
 
-                        let lanes = (width - x).min(4);
-                        row[x..x + lanes].copy_from_slice(&pixels[..lanes]);
+                    let mut x = 0usize;
+                    let mut chunks = row.chunks_exact_mut(4);
+                    for out in &mut chunks {
+                        out.copy_from_slice(&compute(x));
                         x += 4;
+                    }
+
+                    let tail = chunks.into_remainder();
+                    if !tail.is_empty() {
+                        let pixels = compute(x);
+                        tail.copy_from_slice(&pixels[..tail.len()]);
                     }
                 }
             });
