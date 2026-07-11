@@ -4,9 +4,7 @@ use rayon::prelude::*;
 use crate::palette::{self, Rgb};
 
 pub struct NoiseField {
-    perlin_hue: Simplex,
-    perlin_sat: Simplex,
-    perlin_light: Simplex,
+    simplex: Simplex,
     scale: f64,
     speed: f64,
 }
@@ -14,9 +12,7 @@ pub struct NoiseField {
 impl NoiseField {
     pub fn new(seed: u32, scale: f64, speed: f64) -> Self {
         Self {
-            perlin_hue: Simplex::new(seed),
-            perlin_sat: Simplex::new(seed.wrapping_add(1)),
-            perlin_light: Simplex::new(seed.wrapping_add(2)),
+            simplex: Simplex::new(seed),
             scale,
             speed,
         }
@@ -30,20 +26,14 @@ impl NoiseField {
             .par_chunks_mut(width as usize)
             .enumerate()
             .for_each(|(y, row)| {
+                let sy = y as f64 * self.scale;
                 for x in 0..width {
-                    let v_hue =
-                        self.perlin_hue
-                            .get([x as f64 * self.scale, y as f64 * self.scale, z]);
-                    let v_sat =
-                        self.perlin_sat
-                            .get([x as f64 * self.scale, y as f64 * self.scale, z]);
-                    let v_light =
-                        self.perlin_light
-                            .get([x as f64 * self.scale, y as f64 * self.scale, z]);
+                    let noise = self.simplex.get([x as f64 * self.scale, sy, z]);
 
-                    let hue = v_hue.rem_euclid(0.5) / 0.5 * 360.0;
-                    let lightness = 0.25 + (v_light + 1.0) / 2.0 * 0.5;
-                    let saturation = 0.5 + (v_sat + 1.0) / 2.0 * 0.5;
+                    let wrapped = noise - (noise * 2.0).floor() * 0.5;
+                    let hue = wrapped / 0.5 * 360.0;
+                    let lightness = 0.5;
+                    let saturation = 0.75;
 
                     let Rgb { r, g, b } = palette::hsl_to_rgb(hue, saturation, lightness);
                     row[x as usize] = (r as u32) << 16 | (g as u32) << 8 | (b as u32);

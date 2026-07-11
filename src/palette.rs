@@ -5,22 +5,17 @@ pub struct Rgb {
 }
 
 pub fn hsl_to_rgb(h: f64, s: f64, l: f64) -> Rgb {
-    let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
-    let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
-    let m = l - c / 2.0;
-
-    let (rp, gp, bp) = match (h / 60.0).floor() as i32 {
-        0 => (c, x, 0.0),
-        1 => (x, c, 0.0),
-        2 => (0.0, c, x),
-        3 => (0.0, x, c),
-        4 => (x, 0.0, c),
-        _ => (c, 0.0, x),
+    let a = s * l.min(1.0 - l);
+    let f = |n: f64| {
+        let k0 = n + h / 30.0;
+        let k = if k0 >= 12.0 { k0 - 12.0 } else { k0 };
+        l - a * (k - 3.0).min(9.0 - k).min(1.0).max(-1.0)
     };
+    let to_u8 = |v: f64| (v * 255.0).round().clamp(0.0, 255.0) as u8;
 
     Rgb {
-        r: ((rp + m) * 255.0).round().clamp(0.0, 255.0) as u8,
-        g: ((gp + m) * 255.0).round().clamp(0.0, 255.0) as u8,
-        b: ((bp + m) * 255.0).round().clamp(0.0, 255.0) as u8,
+        r: to_u8(f(0.0)),
+        g: to_u8(f(8.0)),
+        b: to_u8(f(4.0)),
     }
 }
