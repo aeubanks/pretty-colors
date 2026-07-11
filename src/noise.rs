@@ -1,4 +1,5 @@
 use noise::{NoiseFn, Simplex};
+use rayon::prelude::*;
 
 use crate::palette::{self, Rgb};
 
@@ -25,26 +26,28 @@ impl NoiseField {
         let z = t * self.speed * 0.3;
         assert_eq!(buffer.len(), (width * height) as usize);
 
-        for y in 0..height {
-            for x in 0..width {
-                let v_hue = self
-                    .perlin_hue
-                    .get([x as f64 * self.scale, y as f64 * self.scale, z]);
-                let v_sat = self
-                    .perlin_sat
-                    .get([x as f64 * self.scale, y as f64 * self.scale, z]);
-                let v_light =
-                    self.perlin_light
-                        .get([x as f64 * self.scale, y as f64 * self.scale, z]);
+        buffer
+            .par_chunks_mut(width as usize)
+            .enumerate()
+            .for_each(|(y, row)| {
+                for x in 0..width {
+                    let v_hue =
+                        self.perlin_hue
+                            .get([x as f64 * self.scale, y as f64 * self.scale, z]);
+                    let v_sat =
+                        self.perlin_sat
+                            .get([x as f64 * self.scale, y as f64 * self.scale, z]);
+                    let v_light =
+                        self.perlin_light
+                            .get([x as f64 * self.scale, y as f64 * self.scale, z]);
 
-                let hue = v_hue.rem_euclid(0.5) / 0.5 * 360.0;
-                let lightness = 0.25 + (v_light + 1.0) / 2.0 * 0.5;
-                let saturation = 0.5 + (v_sat + 1.0) / 2.0 * 0.5;
+                    let hue = v_hue.rem_euclid(0.5) / 0.5 * 360.0;
+                    let lightness = 0.25 + (v_light + 1.0) / 2.0 * 0.5;
+                    let saturation = 0.5 + (v_sat + 1.0) / 2.0 * 0.5;
 
-                let Rgb { r, g, b } = palette::hsl_to_rgb(hue, saturation, lightness);
-                let idx = (y * width + x) as usize;
-                buffer[idx] = (r as u32) << 16 | (g as u32) << 8 | (b as u32);
-            }
-        }
+                    let Rgb { r, g, b } = palette::hsl_to_rgb(hue, saturation, lightness);
+                    row[x as usize] = (r as u32) << 16 | (g as u32) << 8 | (b as u32);
+                }
+            });
     }
 }
