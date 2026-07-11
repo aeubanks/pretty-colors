@@ -124,21 +124,20 @@ fn simplex_3d_x4(x: f32x4, y: f32x4, z: f32x4, seed: u32) -> f32x4 {
 
 pub struct NoiseField {
     seed: u32,
-    scale: f32,
     speed: f32,
 }
 
 impl NoiseField {
-    pub fn new(seed: u32, scale: f64, speed: f64) -> Self {
+    pub fn new(seed: u32, speed: f64) -> Self {
         Self {
             seed,
-            scale: scale as f32,
             speed: speed as f32,
         }
     }
 
-    pub fn fill(&self, buffer: &mut [u32], width: u32, height: u32, t: f64) {
+    pub fn fill(&self, buffer: &mut [u32], width: u32, height: u32, t: f64, scale: f64) {
         let z = (t as f32) * self.speed * 0.3;
+        let scale = scale as f32;
         assert_eq!(buffer.len(), (width * height) as usize);
 
         let zv = f32x4::splat(z);
@@ -150,15 +149,15 @@ impl NoiseField {
             .for_each(|(chunk, block)| {
                 let y0 = chunk * ROWS_PER_CHUNK;
                 for (dy, row) in block.chunks_mut(width).enumerate() {
-                    let yv = f32x4::splat((y0 + dy) as f32 * self.scale);
+                    let yv = f32x4::splat((y0 + dy) as f32 * scale);
 
                     let compute = |x: usize| -> [u32; 4] {
-                        let base = x as f32 * self.scale;
+                        let base = x as f32 * scale;
                         let xv = f32x4::new([
                             base,
-                            base + self.scale,
-                            base + 2.0 * self.scale,
-                            base + 3.0 * self.scale,
+                            base + scale,
+                            base + 2.0 * scale,
+                            base + 3.0 * scale,
                         ]);
                         let noise = simplex_3d_x4(xv, yv, zv, self.seed);
                         let wrapped =

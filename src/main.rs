@@ -36,8 +36,7 @@ fn main() {
     let seed = args
         .seed
         .unwrap_or_else(|| rand::random::<u32>() % 1_000_000);
-    let noise = NoiseField::new(seed, args.scale, args.speed);
-
+    let noise = NoiseField::new(seed, args.speed);
     eprintln!(
         "Window: {}×{}, scale: {}, speed: {}, seed: {}, fps: {}",
         args.width, args.height, args.scale, args.speed, seed, args.fps
@@ -55,9 +54,18 @@ fn main() {
 
     let mut buffer: Vec<u32> = vec![0; (args.width * args.height) as usize];
     let mut t = 0.0_f64;
+    let mut scale = args.scale;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        noise.fill(&mut buffer, args.width, args.height, t);
+        for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
+            match key {
+                Key::Up => scale /= 2.0,
+                Key::Down => scale *= 2.0,
+                _ => {}
+            }
+        }
+
+        noise.fill(&mut buffer, args.width, args.height, t, scale);
         window
             .update_with_buffer(&buffer, args.width as usize, args.height as usize)
             .unwrap();
