@@ -8,6 +8,7 @@ clap = { version = "4.6", features = ["derive"] }
 minifb = "0.28"
 rand = "0.10"
 rayon = "1.10"
+wide = "1.5.0"
 
 [profile.release]
 lto = true
