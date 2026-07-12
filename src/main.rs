@@ -46,11 +46,15 @@ fn main() {
         "pretty-colors",
         args.width as usize,
         args.height as usize,
-        WindowOptions::default(),
+        WindowOptions {
+            borderless: true,
+            ..WindowOptions::default()
+        },
     )
     .unwrap();
 
     window.set_target_fps(args.fps as usize);
+    window.set_cursor_visibility(false);
 
     let mut buffer: Vec<u32> = vec![0; (args.width * args.height) as usize];
     let mut t = 0.0_f64;
