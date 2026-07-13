@@ -135,9 +135,18 @@ impl NoiseField {
         }
     }
 
-    pub fn fill(&self, buffer: &mut [u32], width: u32, height: u32, t: f64, scale: f64) {
+    pub fn fill(
+        &self,
+        buffer: &mut [u32],
+        width: u32,
+        height: u32,
+        t: f64,
+        scale: f64,
+        lightness: f64,
+    ) {
         let z = (t as f32) * self.speed * 0.3;
         let scale = scale as f32;
+        let lightness = lightness as f32;
         assert_eq!(buffer.len(), (width * height) as usize);
 
         let zv = f32x4::splat(z);
@@ -163,7 +172,7 @@ impl NoiseField {
                         let wrapped =
                             noise - (noise * f32x4::splat(2.0)).floor() * f32x4::splat(0.5);
                         let hue = wrapped * f32x4::splat(360.0 / 0.5);
-                        cast(palette::hsl_to_rgb_x4(hue, 0.75, 0.5))
+                        cast(palette::hsl_to_rgb_x4(hue, 0.75, lightness))
                     };
 
                     let mut x = 0usize;

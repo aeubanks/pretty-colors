@@ -26,6 +26,9 @@ struct Args {
     #[arg(long)]
     seed: Option<u32>,
 
+    #[arg(long, default_value_t = 0.5)]
+    lightness: f64,
+
     #[arg(long, default_value_t = 30)]
     fps: u32,
 }
@@ -38,8 +41,8 @@ fn main() {
         .unwrap_or_else(|| rand::random::<u32>() % 1_000_000);
     let noise = NoiseField::new(seed, args.speed);
     eprintln!(
-        "Window: {}×{}, scale: {}, speed: {}, seed: {}, fps: {}",
-        args.width, args.height, args.scale, args.speed, seed, args.fps
+        "Window: {}×{}, scale: {}, speed: {}, seed: {}, lightness: {}, fps: {}",
+        args.width, args.height, args.scale, args.speed, seed, args.lightness, args.fps
     );
 
     let mut window = Window::new(
@@ -69,7 +72,14 @@ fn main() {
             }
         }
 
-        noise.fill(&mut buffer, args.width, args.height, t, scale);
+        noise.fill(
+            &mut buffer,
+            args.width,
+            args.height,
+            t,
+            scale,
+            args.lightness,
+        );
         window
             .update_with_buffer(&buffer, args.width as usize, args.height as usize)
             .unwrap();
